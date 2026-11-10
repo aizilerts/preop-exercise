@@ -111,7 +111,7 @@ def main() -> None:
 
             try:
                 output = triage_submission(
-                    submission=submission,
+                    submission=case.submission,
                     model=args.model,
                 )
                 row["output"] = output.model_dump()

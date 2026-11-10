@@ -39,42 +39,72 @@ export OPENAI_API_KEY="<your_api_key>"
 
 ## Recommended Workflow
 
-1. Implement `triage_submission` in `core.py`.
-2. Run baseline outputs:
+### Windows PowerShell
+(These were added so I could run the tests with uv instead of make)
 
-```bash
-make baseline
+`make` is a separate build utility and is not included with Windows PowerShell by
+default. You can run the equivalent project commands directly with `uv`:
+
+1. Run the unit tests, which mock the API and test the policy rules locally:
+
+```powershell
+uv run --with 'openai>=2.0.0' --with 'pydantic>=2.8.0' --with 'pytest>=8.0.0' python -m pytest tests
+```
+
+2. Run baseline outputs (this sends each submission's document text to the API):
+
+```powershell
+uv run run_baseline.py --input data/patients_sample_50.jsonl --output data/baseline_outputs.jsonl --model gpt-4.1-mini
 ```
 
 3. Run eval scoring:
 
-```bash
-make evals
+```powershell
+uv run run_evals.py --input data/patients_sample_50.jsonl --outputs data/baseline_outputs.jsonl --report data/eval_report.json
 ```
 
-4. Run determinism check:
+4. Run determinism check (this makes repeated API calls for one case):
 
-```bash
-make determinism
+```powershell
+uv run run_evals.py --determinism --input data/patients_sample_50.jsonl --model gpt-4.1-mini --report data/determinism_report.json
 ```
 
 5. Print score:
 
-```bash
-make score
+```powershell
+uv run python -c "import json; r=json.load(open('data/eval_report.json', encoding='utf-8')); s=(r.get('primary_score') or {}).get('value_pct'); print(s if s is not None else r.get('local_metrics_summary', {}).get('aggregate_local_score_pct', 0.0))"
 ```
 
 6. View the interactive report (TUI):
 
-```bash
-make report
+```powershell
+uv run view_report.py --report data/eval_report.json
 ```
 
 This opens a terminal UI (`view_report.py`) that shows per-case results side-by-side with oracle expectations. You can browse records, see metric pass/fail status, and inspect submission data. Press `f` on a metric row to filter the case list to failures. Press `q` to quit.
 
+### macOS/Linux (or a shell with GNU Make)
+
+The `make` shortcuts below use the same commands and default paths:
+
+```bash
+make test
+make baseline
+make evals
+make determinism
+make score
+make report
+```
+
 ## Tests
 
-Run the unit tests with:
+Run the unit tests with PowerShell:
+
+```powershell
+uv run --with 'openai>=2.0.0' --with 'pydantic>=2.8.0' --with 'pytest>=8.0.0' python -m pytest tests
+```
+
+Or, if GNU Make is available:
 
 ```bash
 make test
